@@ -7,24 +7,24 @@
 <br />
 
 <p align="center">
-  <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32">
-    <img src="images/logo.png" alt="Logo" width="160" height="160">
-  </a>
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32">
+<img src="images/logo.png" alt="Logo" width="160" height="160">
+</a>
 
-  <h3 align="center">OTA for STM32Fxx MCU using ESP32</h3>
-  <p align="center">
-    Program your STM32Fxx Over-the-Air using ESP32
-    <br />
-    <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/"></a>
-    <br />
-    <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/">View Code</a>
-    ·
-    <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/issues">Request Feature</a>
-    ·
-    <a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/pulls">Create a Pull Request</a>
-  </p>
+<h3 align="center">OTA for STM32Fxx MCU using ESP32</h3>
+<p align="center">
+Program your STM32Fxx Over-the-Air using ESP32
+<br />
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/"></a>
+<br />
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/">View Code</a>
+·
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/issues">Report Bug</a>
+·
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/issues">Request Feature</a>
+·
+<a href="https://github.com/laukik-hase/OTA_update_STM32_using_ESP32/pulls">Create a Pull Request</a>
+</p>
 </p>
 
 <!-- TABLE OF CONTENTS -->
@@ -68,25 +68,27 @@ To run the OTA demo, you need an ESP32 dev board (e.g. ESP32-WROVER Kit) or ESP3
 
 * **ESP-IDF v4.0 and above**
 
-  You can visit the [ESP-IDF Programmming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#installation-step-by-step) for the installation steps.
+    You can visit the [ESP-IDF Programmming Guide](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html#installation-step-by-step) for the installation steps.
 
 * **Arduino IDE**
 
-  Arduino IDE provides with an easy way to generate the **.bin** files for your STM32 MCU. For setting up Arduino Core for the STM32 family, you can follow this [link](https://circuitdigest.com/microcontroller-projects/getting-started-with-stm32-development-board-stm32f103c8-using-arduino-ide).
+    Arduino IDE provides with an easy way to generate the **.bin** files for your STM32 MCU. For setting up Arduino Core for the STM32 family, you can follow this [link](https://circuitdigest.com/microcontroller-projects/getting-started-with-stm32-development-board-stm32f103c8-using-arduino-ide).
 
-  You can also use [**CubeIDE**]((https://stackoverflow.com/questions/57017703/how-do-i-generate-a-binary-file-of-the-stm32-code)) or [**Keil**](https://www2.keil.com/stmicroelectronics-stm32) for generation of **.bin** files.
+    You can also use [**CubeIDE**]((https://stackoverflow.com/questions/57017703/how-do-i-generate-a-binary-file-of-the-stm32-code)) or [**Keil**](https://www2.keil.com/stmicroelectronics-stm32) for generation of **.bin** files.
 
-  
+
 ### Setting Up
 
-1. Wire your STM32 (e.g. Blue Pill) to the ESP32 as follows:
+1. Wire your STM32 (e.g. Blue Pill) to the ESP32 as follows (see
+   `./components/stm_pro_mode/include/stm_pro_mode.h`):
 
-    | ESP32     | STM32    |
-    |-----------|----------|
-    | GPIO4(TX) | PA10(RX) |
-    | GPIO5(RX) | PA9(TX)  |
-    | GPIO19    | RESET    |
-    | GND       | GND      |
+| ESP32     | STM32    |
+|-----------|----------|
+| GPIO1(TX) | PA10(RX) |
+| GPIO3(RX) | PA9(TX)  |
+| GPIO18    | BOOT0    |
+| GPIO19    | NRST    |
+| GND       | GND      |
 
 2. Generate a  **.bin** file for the STM32 MCU code you want to flash.
 
@@ -98,44 +100,44 @@ The program code uses only the path of the binary file to be flashed as a parame
 
 ## Usage (For STM32 Blue Pill)
 
-1. Make sure the BOOT0 jumper pin on the board is set to 1 (programming mode) while uploading the code. Once the code is flashed this pin can be changed back to initial position (operating mode). This procedure with your STM32Fxx MCU varies according with your MCU version. 
-  
-      Refer this [documentation](https://www.st.com/content/ccc/resource/technical/document/application_note/b9/9b/16/3a/12/1e/40/0c/CD00167594.pdf/files/CD00167594.pdf/jcr:content/translations/en.CD00167594.pdf) for help.
-  
-  <p align="center">
-    <kbd><img width="500" height="355" src="images/blue_pill_bm.jpg" border="5"></kbd>
-  </p>
-  
-2. Open the project configuration menu (`idf.py menuconfig`) go to `Example Connection Configuration` ->
-    1. WiFi SSID: WiFi network to which your PC is also connected to.
-    2. WiFi Password: WiFi password
+1. Make sure the BOOT0 jumper pin on the board is set to 1 (programming mode) while uploading the code. Once the code is flashed this pin can be changed back to initial position (operating mode). This procedure with your STM32Fxx MCU varies according with your MCU version.
 
-  <p align="center">
-    <kbd><img width="800" height="450" src="images/ex_config.png" border="5"></kbd>
-  </p>
+Refer this [documentation](https://www.st.com/content/ccc/resource/technical/document/application_note/b9/9b/16/3a/12/1e/40/0c/CD00167594.pdf/files/CD00167594.pdf/jcr:content/translations/en.CD00167594.pdf) for help.
+
+<p align="center">
+<kbd><img width="500" height="355" src="images/blue_pill_bm.jpg" border="5"></kbd>
+</p>
+
+2. Open the project configuration menu (`idf.py menuconfig`) go to `Example Connection Configuration` ->
+1. WiFi SSID: WiFi network to which your PC is also connected to.
+2. WiFi Password: WiFi password
+
+<p align="center">
+<kbd><img width="800" height="450" src="images/ex_config.png" border="5"></kbd>
+</p>
 
 3. In order to test the OTA demo -> `/file_serving_stm` :
-    1. Compile and burn the firmware `idf.py -p PORT -b BAUD flash`
-    2. Run `idf.py -p PORT monitor` and note down the IP assigned to your ESP module. The default port is 80.
-    3. Test the example interactively on a web browser (assuming IP is 192.168.43.82):
+1. Compile and burn the firmware `idf.py -p PORT -b BAUD flash`
+2. Run `idf.py -p PORT monitor` and note down the IP assigned to your ESP module. The default port is 80.
+3. Test the example interactively on a web browser (assuming IP is 192.168.43.82):
         * Open path `http://192.168.43.82/` to see an HTML web page with list of files on the server (initially empty)
         * Use the file upload form on the webpage to select and upload a .bin file to the server
         * Click a file link to download / open the file on browser (if supported)
         * Click the delete link visible next to each file entry to delete them
         * Click on the flash link to flash the .bin code file uploaded to the connected STM32.
 
-  <p align="center">
-    <kbd><img width="800" height="450" src="images/html_web.png"></kbd>
-  </p>
+            <p align="center">
+            <kbd><img width="800" height="450" src="images/html_web.png"></kbd>
+            </p>
 
-4. After clicking the flash link, you should get the following results - 
+            4. After clicking the flash link, you should get the following results -
 
-  <p align="center">
-      <img width="800" height="450" src="images/stm_demo.gif">
-  </p>
+            <p align="center">
+            <img width="800" height="450" src="images/stm_demo.gif">
+            </p>
 
-5. **Revert** the BOOT0 pin to its initial position and press the RESET Button on the STM32.
-6. Voila! your STM32 is now running the code you uploaded Over-the-Air!
+            5. **Revert** the BOOT0 pin to its initial position and press the RESET Button on the STM32.
+            6. Voila! your STM32 is now running the code you uploaded Over-the-Air!
 
 ## Troubleshooting
 
@@ -151,7 +153,7 @@ The program code uses only the path of the binary file to be flashed as a parame
 
 * [**udit7395**](https://github.com/udit7395)
 
-**For OTA updates for AVR MCUs, you can follow this [project](https://github.com/laukik-hase/OTA_update_AVR_using_ESP32/).**
+    **For OTA updates for AVR MCUs, you can follow this [project](https://github.com/laukik-hase/OTA_update_AVR_using_ESP32/).**
 
 ## Acknowledgements and Resources
 
@@ -168,7 +170,7 @@ The program code uses only the path of the binary file to be flashed as a parame
 * [HackerNews Article: Updating STM32 Over-The-Air using ESP32](https://news.ycombinator.com/item?id=23302664)
 
 * [Reddit Post: Update STM32 Over-the-Air using ESP32](https://www.reddit.com/r/esp32/comments/jx399y/update_stm32_overtheair_using_esp32/)
-  
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
