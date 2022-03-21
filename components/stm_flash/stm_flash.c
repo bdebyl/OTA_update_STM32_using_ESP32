@@ -23,7 +23,6 @@ esp_err_t writeTask(FILE *flash_file) {
     }
 
     incrementLoadAddress(loadAddress);
-    printf("\n");
 
     memset(block, 0xff, 256);
   }
@@ -66,7 +65,7 @@ esp_err_t flashSTM(const char *file_name) {
   sprintf(file_path, "%s%s", BASE_PATH, file_name);
   ESP_LOGI(TAG_STM_FLASH, "File name: %s", file_path);
 
-  initGPIO();
+  // initGPIO();
   FILE *flash_file = fopen(file_path, "rb");
   if (flash_file != NULL) {
     // This while loop executes only once and breaks if any of the functions do
@@ -75,8 +74,10 @@ esp_err_t flashSTM(const char *file_name) {
       ESP_LOGI(TAG_STM_FLASH, "Writing STM32 Memory");
       IS_ESP_OK(writeTask(flash_file));
 
+      /* Disabled until readPage / readTask is fixed for no Serial Timeout
       ESP_LOGI(TAG_STM_FLASH, "Reading STM32 Memory");
       IS_ESP_OK(readTask(flash_file));
+      */
 
       err = ESP_OK;
       ESP_LOGI(TAG_STM_FLASH, "STM32 Flashed Successfully!!!");

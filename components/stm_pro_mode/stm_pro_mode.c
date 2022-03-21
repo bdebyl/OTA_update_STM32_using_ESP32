@@ -56,10 +56,11 @@ void initSPIFFS(void) {
 }
 
 void initGPIO(void) {
+  gpio_set_direction(BOOT0_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_level(BOOT0_PIN, LOW);
+  vTaskDelay(100 / portTICK_RATE_MS);
   gpio_set_direction(RESET_PIN, GPIO_MODE_OUTPUT);
   gpio_set_level(RESET_PIN, HIGH);
-  gpio_set_direction(BOOT0_PIN, GPIO_MODE_OUTPUT);
-  gpio_set_level(BOOT0_PIN, HIGH);
 
   ESP_LOGI(TAG_STM_PRO, "GPIO Initialized");
 }
@@ -67,31 +68,48 @@ void initGPIO(void) {
 void resetSTM(void) {
   ESP_LOGI(TAG_STM_PRO, "Starting RESET Procedure");
 
+  gpio_set_level(BOOT0_PIN, HIGH);
+  vTaskDelay(500 / portTICK_RATE_MS);
   gpio_set_level(RESET_PIN, LOW);
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_RATE_MS);
   gpio_set_level(RESET_PIN, HIGH);
-  vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_RATE_MS);
 
   ESP_LOGI(TAG_STM_PRO, "Finished RESET Procedure");
 }
 
 void endConn(void) {
-  gpio_set_level(RESET_PIN, LOW);
   gpio_set_level(BOOT0_PIN, LOW);
+  vTaskDelay(100 / portTICK_RATE_MS);
+  gpio_set_level(RESET_PIN, LOW);
+  vTaskDelay(500 / portTICK_RATE_MS);
+  gpio_set_level(RESET_PIN, HIGH);
 
-  resetSTM();
-
-  ESP_LOGI(TAG_STM_PRO, "Ending Connection");
+  ESP_LOGI(TAG_STM_PRO, "Ending Connection, Reset Device");
 }
 
 void setupSTM(void) {
-  resetSTM();
-  cmdSync();
-  cmdGet();
-  cmdVersion();
-  cmdId();
-  cmdErase();
-  cmdExtErase();
+  // From logic capture:
+  // 0x7F
+  // 0x01, 0xFE (resp: ACK, 3 bytes, ACK)
+  // 0x00, 0xFF (resp: ACK, 13 bytes, ACK)
+  // 0x02, 0xFD (resp: ACK, 3 bytes, ACK)
+  // 0x44, 0xBB (resp: ACK)
+  // 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x01 (long resp: ACK)
+  // 0x31, 0xCE (write)
+  resetSTM();   // GPIO NRST and BOOT0
+  cmdSync();    // 0x7F resp: ACK
+  cmdVersion(); // 0x01, 0xFE resp: 5? ACK
+  cmdGet();     // 0x00, 0xFF resp: 15? ACK
+  cmdId();      // 0x02, 0xFD resp: 5? ACK
+  // cmdErase();
+  cmdExtErase(); // 0x44, 0xBB
+
+  /*
+    in stm_flash.c after this:
+    flashPage(...) ->
+        cmdWrite() // 0x31, 0xCE resp: ACK
+  */
 }
 
 int cmdSync(void) {
@@ -99,7 +117,7 @@ int cmdSync(void) {
 
   char bytes[] = {0x7F};
   int resp = 1;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
 int cmdGet(void) {
@@ -107,7 +125,7 @@ int cmdGet(void) {
 
   char bytes[] = {0x00, 0xFF};
   int resp = 15;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
 int cmdVersion(void) {
@@ -115,16 +133,17 @@ int cmdVersion(void) {
 
   char bytes[] = {0x01, 0xFE};
   int resp = 5;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
 int cmdId(void) {
   ESP_LOGI(TAG_STM_PRO, "CHECK ID");
   char bytes[] = {0x02, 0xFD};
   int resp = 5;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
+/*
 int cmdErase(void) {
   ESP_LOGI(TAG_STM_PRO, "ERASE MEMORY");
   char bytes[] = {0x43, 0xBC};
@@ -139,34 +158,41 @@ int cmdErase(void) {
   }
   return 0;
 }
-
+*/
 int cmdExtErase(void) {
   ESP_LOGI(TAG_STM_PRO, "EXTENDED ERASE MEMORY");
   char bytes[] = {0x44, 0xBB};
   int resp = 1;
-  int a = sendBytes(bytes, sizeof(bytes), resp);
 
+  int a = sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
   if (a == 1) {
-    char params[] = {0xFF, 0xFF, 0x00};
-    resp = 1;
+    // ORIGINAL: char params[] = {0xFF, 0xFF, 0x00};
+    char params[] = {0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x01};
 
-    return sendBytes(params, sizeof(params), resp);
+    a = sendBytes(params, sizeof(params), resp, SERIAL_TIMEOUT_LONG);
+    if (a != 1) {
+      ESP_LOGI(TAG_STM_PRO,
+               "EXTENDED ERASE MEMORY ERROR ACK ERROR: expected %x got %x",
+               resp, a);
+      return a;
+    }
   }
-  return 0;
+
+  return a; // sendBytes(bytes, sizeof(bytes), resp);
 }
 
 int cmdWrite(void) {
-  ESP_LOGI(TAG_STM_PRO, "WRITE MEMORY");
+  //ESP_LOGI(TAG_STM_PRO, "WRITE MEMORY");
   char bytes[2] = {0x31, 0xCE};
   int resp = 1;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
 int cmdRead(void) {
   ESP_LOGI(TAG_STM_PRO, "READ MEMORY");
   char bytes[2] = {0x11, 0xEE};
   int resp = 1;
-  return sendBytes(bytes, sizeof(bytes), resp);
+  return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
 }
 
 int loadAddress(const char adrMS, const char adrMI, const char adrLI,
@@ -176,24 +202,26 @@ int loadAddress(const char adrMS, const char adrMI, const char adrLI,
   int resp = 1;
 
   // ESP_LOG_BUFFER_HEXDUMP("LOAD ADDR", params, sizeof(params), ESP_LOG_DEBUG);
-  return sendBytes(params, sizeof(params), resp);
+  return sendBytes(params, sizeof(params), resp, SERIAL_TIMEOUT);
 }
-
+/*
 int sendBytes(const char *bytes, int count, int resp) {
   sendData(TAG_STM_PRO, bytes, count);
   int length = waitForSerialData(resp, SERIAL_TIMEOUT);
 
   if (length > 0) {
     uint8_t data[length];
-    const int rxBytes =
-        uart_read_bytes(UART_CONTROLLER, data, length, 1000 / portTICK_RATE_MS);
+    int rxBytes = uart_read_bytes(UART_CONTROLLER, data, length,
+                                  SERIAL_TIMEOUT / portTICK_RATE_MS);
 
     if (rxBytes > 0 && data[0] == ACK) {
       ESP_LOGI(TAG_STM_PRO, "Sync Success");
       // ESP_LOG_BUFFER_HEXDUMP("SYNC", data, rxBytes, ESP_LOG_DEBUG);
       return 1;
     } else {
-      ESP_LOGE(TAG_STM_PRO, "Sync Failure");
+      ESP_LOGE(TAG_STM_PRO,
+               "Sync Failure (rxBytes: %x; data[0]: %x expected %x", rxBytes,
+               data[0], ACK);
       return 0;
     }
   } else {
@@ -201,6 +229,35 @@ int sendBytes(const char *bytes, int count, int resp) {
     return 0;
   }
 
+  return 0;
+}
+*/
+int sendBytes(const char *bytes, int count, int resp, int timeout) {
+  sendData(TAG_STM_PRO, bytes, count);
+  uint8_t *data = (uint8_t *)malloc(resp * sizeof(uint8_t *));
+
+  int retries = SERIAL_RETRIES;
+  int rxBytes;
+  do {
+    rxBytes = uart_read_bytes(UART_CONTROLLER, data, UART_BUF_SIZE,
+                              timeout / portTICK_PERIOD_MS);
+
+    if (rxBytes > 0) {
+      if (rxBytes == resp && data[0] == ACK) {
+        data[rxBytes] = 0;
+        // ESP_LOGI(TAG_STM_PRO, "%s", "Sync Success");
+        // ESP_LOG_BUFFER_HEXDUMP(TAG_STM_PRO, data, rxBytes, ESP_LOG_INFO);
+        free(data);
+        return 1;
+      } else {
+        ESP_LOGE(TAG_STM_PRO, "Sync Failure -- Retry #%d", SERIAL_RETRIES - retries);
+        // free(data);
+        // return 0;
+      }
+    }
+  } while (retries-- || rxBytes == 0);
+  ESP_LOGE(TAG_STM_PRO, "%s", "Serial Timeout");
+  free(data);
   return 0;
 }
 
@@ -237,7 +294,7 @@ void incrementLoadAddress(char *loadAddr) {
 }
 
 esp_err_t flashPage(const char *address, const char *data) {
-  ESP_LOGI(TAG_STM_PRO, "Flashing Page");
+  // ESP_LOGI(TAG_STM_PRO, "Flashing Page");
 
   cmdWrite();
 
@@ -255,23 +312,12 @@ esp_err_t flashPage(const char *address, const char *data) {
     xor ^= data[i];
   }
 
-  sendData(TAG_STM_PRO, &xor, 1);
-
-  int length = waitForSerialData(1, SERIAL_TIMEOUT);
-  if (length > 0) {
-    uint8_t data[length];
-    const int rxBytes =
-        uart_read_bytes(UART_CONTROLLER, data, length, 1000 / portTICK_RATE_MS);
-    if (rxBytes > 0 && data[0] == ACK) {
-      ESP_LOGI(TAG_STM_PRO, "Flash Success");
-      return ESP_OK;
-    } else {
-      ESP_LOGE(TAG_STM_PRO, "Flash Failure");
-      return ESP_FAIL;
-    }
-  } else {
-    ESP_LOGE(TAG_STM_PRO, "Serial Timeout");
+  // Verify we get ACK back on the last byte sent
+  if (sendBytes(&xor, 1, 1, SERIAL_TIMEOUT) == 1) {
+    // ESP_LOGI(TAG_STM_PRO, "Flash Success");
+    return ESP_OK;
   }
+  ESP_LOGE(TAG_STM_PRO, "Flash Failure");
   return ESP_FAIL;
 }
 
@@ -284,11 +330,11 @@ esp_err_t readPage(const char *address, const char *data) {
   loadAddress(address[0], address[1], address[2], address[3]);
 
   sendData(TAG_STM_PRO, param, sizeof(param));
-  int length = waitForSerialData(257, SERIAL_TIMEOUT);
+  int length = waitForSerialData(257, SERIAL_TIMEOUT_LONG);
   if (length > 0) {
     uint8_t uart_data[length];
     const int rxBytes =
-        uart_read_bytes(UART_NUM_1, uart_data, length, 1000 / portTICK_RATE_MS);
+        uart_read_bytes(UART_NUM_1, uart_data, length, 1000 / portTICK_PERIOD_MS);
 
     if (rxBytes > 0 && uart_data[0] == 0x79) {
       ESP_LOGI(TAG_STM_PRO, "Success");

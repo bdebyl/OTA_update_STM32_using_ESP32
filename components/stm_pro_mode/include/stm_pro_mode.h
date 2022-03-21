@@ -36,10 +36,10 @@
   if ((x) != ESP_OK)                                                           \
     break;
 
-#define TXD_PIN (GPIO_NUM_1) //(GPIO_NUM_4)
-#define RXD_PIN (GPIO_NUM_3) //(GPIO_NUM_5)
-#define UART_BAUD_RATE 115200
-#define UART_BUF_SIZE 1024
+#define TXD_PIN (GPIO_NUM_4) //(GPIO_NUM_4)
+#define RXD_PIN (GPIO_NUM_5) //(GPIO_NUM_5)
+#define UART_BAUD_RATE 28800
+#define UART_BUF_SIZE 4096 //1024
 #define UART_CONTROLLER UART_NUM_1
 
 #define RESET_PIN (GPIO_NUM_19) //(GPIO_NUM_12)
@@ -48,7 +48,9 @@
 #define LOW 0
 
 #define ACK 0x79
-#define SERIAL_TIMEOUT 5000
+#define SERIAL_TIMEOUT_LONG 500
+#define SERIAL_TIMEOUT 1
+#define SERIAL_RETRIES 5
 
 #define FILE_PATH_MAX 128
 #define BASE_PATH "/spiffs/"
@@ -100,7 +102,7 @@ int cmdWrite(void);
 int cmdRead(void);
 
 // UART send data to STM32Fxx & wait for response
-int sendBytes(const char *bytes, int count, int resp);
+int sendBytes(const char *bytes, int count, int resp, int timeout);
 
 // UART send data byte-by-byte to STM32Fxx
 int sendData(const char *logName, const char *data, const int count);
