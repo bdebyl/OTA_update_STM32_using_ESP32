@@ -36,8 +36,8 @@
   if ((x) != ESP_OK)                                                           \
     break;
 
-#define TXD_PIN (GPIO_NUM_4) //(GPIO_NUM_4)
-#define RXD_PIN (GPIO_NUM_5) //(GPIO_NUM_5)
+#define TXD_PIN (GPIO_NUM_17) //(GPIO_NUM_4)
+#define RXD_PIN (GPIO_NUM_16) //(GPIO_NUM_5)
 #define UART_BAUD_RATE 28800
 #define UART_BUF_SIZE 4096 //1024
 #define UART_CONTROLLER UART_NUM_1
