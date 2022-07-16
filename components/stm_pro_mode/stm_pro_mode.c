@@ -69,10 +69,11 @@ void resetSTM(void) {
   ESP_LOGI(TAG_STM_PRO, "Starting RESET Procedure");
 
   gpio_set_level(BOOT0_PIN, HIGH);
-  vTaskDelay(100 / portTICK_RATE_MS);
-  gpio_set_level(RESET_PIN, LOW);
   vTaskDelay(500 / portTICK_RATE_MS);
+  gpio_set_level(RESET_PIN, LOW);
+  vTaskDelay(100 / portTICK_RATE_MS);
   gpio_set_level(RESET_PIN, HIGH);
+  vTaskDelay(500 / portTICK_RATE_MS);
 
   ESP_LOGI(TAG_STM_PRO, "Finished RESET Procedure");
 }
