@@ -69,11 +69,10 @@ void resetSTM(void) {
   ESP_LOGI(TAG_STM_PRO, "Starting RESET Procedure");
 
   gpio_set_level(BOOT0_PIN, HIGH);
-  vTaskDelay(500 / portTICK_RATE_MS);
-  gpio_set_level(RESET_PIN, LOW);
   vTaskDelay(100 / portTICK_RATE_MS);
-  gpio_set_level(RESET_PIN, HIGH);
+  gpio_set_level(RESET_PIN, LOW);
   vTaskDelay(500 / portTICK_RATE_MS);
+  gpio_set_level(RESET_PIN, HIGH);
 
   ESP_LOGI(TAG_STM_PRO, "Finished RESET Procedure");
 }
@@ -182,7 +181,7 @@ int cmdExtErase(void) {
 }
 
 int cmdWrite(void) {
-  //ESP_LOGI(TAG_STM_PRO, "WRITE MEMORY");
+  // ESP_LOGI(TAG_STM_PRO, "WRITE MEMORY");
   char bytes[2] = {0x31, 0xCE};
   int resp = 1;
   return sendBytes(bytes, sizeof(bytes), resp, SERIAL_TIMEOUT);
@@ -250,7 +249,8 @@ int sendBytes(const char *bytes, int count, int resp, int timeout) {
         free(data);
         return 1;
       } else {
-        ESP_LOGE(TAG_STM_PRO, "Sync Failure -- Retry #%d", SERIAL_RETRIES - retries);
+        ESP_LOGE(TAG_STM_PRO, "Sync Failure -- Retry #%d",
+                 SERIAL_RETRIES - retries);
         // free(data);
         // return 0;
       }
@@ -333,8 +333,8 @@ esp_err_t readPage(const char *address, const char *data) {
   int length = waitForSerialData(257, SERIAL_TIMEOUT_LONG);
   if (length > 0) {
     uint8_t uart_data[length];
-    const int rxBytes =
-        uart_read_bytes(UART_NUM_1, uart_data, length, 1000 / portTICK_PERIOD_MS);
+    const int rxBytes = uart_read_bytes(UART_NUM_1, uart_data, length,
+                                        1000 / portTICK_PERIOD_MS);
 
     if (rxBytes > 0 && uart_data[0] == 0x79) {
       ESP_LOGI(TAG_STM_PRO, "Success");
