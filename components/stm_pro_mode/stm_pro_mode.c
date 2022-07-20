@@ -65,7 +65,7 @@ void initGPIO(void) {
   ESP_LOGI(TAG_STM_PRO, "GPIO Initialized");
 }
 
-void setBootmode(enum STM_BOOTMODE bootmode) {
+void setBootmode(STM_BOOTMODE bootmode) {
   vTaskDelay(100 / portTICK_RATE_MS);
   switch (bootmode) {
   case STM_BOOTMODE_PROG:
@@ -84,7 +84,7 @@ void setBootmode(enum STM_BOOTMODE bootmode) {
   vTaskDelay(100 / portTICK_RATE_MS);
 }
 
-void resetSTM(enum STM_BOOTMODE bootmode) {
+void resetSTM(STM_BOOTMODE bootmode) {
   ESP_LOGI(TAG_STM_PRO, "Starting RESET Procedure");
 
   setBootmode(bootmode);

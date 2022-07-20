@@ -67,10 +67,10 @@ void initGPIO(void);
 void initSPIFFS(void);
 
 // Sets the boot mode for the STM32 (BOOT0 pin)
-void setBootmode(enum STM_BOOTMODE bootmode);
+void setBootmode(STM_BOOTMODE bootmode);
 
 // Reset the STM32Fxx into the specified bootmode
-void resetSTM(enum STM_BOOTMODE bootmode);
+void resetSTM(STM_BOOTMODE bootmode);
 
 // Increment the memory address for the next write operation
 void incrementLoadAddress(char *loadAddr);
