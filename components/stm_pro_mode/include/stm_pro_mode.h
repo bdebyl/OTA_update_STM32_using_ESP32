@@ -55,6 +55,8 @@
 #define FILE_PATH_MAX 128
 #define BASE_PATH "/spiffs/"
 
+typedef enum { STM_BOOTMODE_PROG = 0, STM_BOOTMODE_RUN } STM_BOOTMODE;
+
 // Initialize UART functionalities
 void initFlashUART(void);
 
@@ -64,8 +66,11 @@ void initGPIO(void);
 // Initialize SPIFFS functionalities
 void initSPIFFS(void);
 
-// Reset the STM32Fxx
-void resetSTM(void);
+// Sets the boot mode for the STM32 (BOOT0 pin)
+void setBootmode(enum STM_BOOTMODE bootmode);
+
+// Reset the STM32Fxx into the specified bootmode
+void resetSTM(enum STM_BOOTMODE bootmode);
 
 // Increment the memory address for the next write operation
 void incrementLoadAddress(char *loadAddr);

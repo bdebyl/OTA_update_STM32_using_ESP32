@@ -65,11 +65,30 @@ void initGPIO(void) {
   ESP_LOGI(TAG_STM_PRO, "GPIO Initialized");
 }
 
-void resetSTM(void) {
+void setBootmode(enum STM_BOOTMODE bootmode) {
+  vTaskDelay(100 / portTICK_RATE_MS);
+  switch (bootmode) {
+  case STM_BOOTMODE_PROG:
+    ESP_LOGI(TAG_STM_PRO, "Bootmode set to PROGRAM");
+    gpio_set_level(BOOT0_PIN, HIGH);
+    break;
+
+  case STM_BOOTMODE_RUN:
+    ESP_LOGI(TAG_STM_PRO, "Bootmode set to RUN");
+    gpio_set_level(BOOT0_PIN, LOW);
+    break;
+
+  default:
+    break;
+  }
+  vTaskDelay(100 / portTICK_RATE_MS);
+}
+
+void resetSTM(enum STM_BOOTMODE bootmode) {
   ESP_LOGI(TAG_STM_PRO, "Starting RESET Procedure");
 
-  gpio_set_level(BOOT0_PIN, LOW);
-  vTaskDelay(100 / portTICK_RATE_MS);
+  setBootmode(bootmode);
+
   gpio_set_level(RESET_PIN, LOW);
   vTaskDelay(100 / portTICK_RATE_MS);
   gpio_set_level(RESET_PIN, HIGH);
@@ -79,11 +98,7 @@ void resetSTM(void) {
 }
 
 void endConn(void) {
-  gpio_set_level(BOOT0_PIN, LOW);
-  vTaskDelay(100 / portTICK_RATE_MS);
-  gpio_set_level(RESET_PIN, LOW);
-  vTaskDelay(500 / portTICK_RATE_MS);
-  gpio_set_level(RESET_PIN, HIGH);
+  resetSTM(STM_BOOTMODE_RUN);
 
   ESP_LOGI(TAG_STM_PRO, "Ending Connection, Reset Device");
 }
@@ -97,11 +112,11 @@ void setupSTM(void) {
   // 0x44, 0xBB (resp: ACK)
   // 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02, 0x01 (long resp: ACK)
   // 0x31, 0xCE (write)
-  resetSTM();   // GPIO NRST and BOOT0
-  cmdSync();    // 0x7F resp: ACK
-  cmdVersion(); // 0x01, 0xFE resp: 5? ACK
-  cmdGet();     // 0x00, 0xFF resp: 15? ACK
-  cmdId();      // 0x02, 0xFD resp: 5? ACK
+  resetSTM(STM_BOOTMODE_PROG); // GPIO NRST and BOOT0
+  cmdSync();                   // 0x7F resp: ACK
+  cmdVersion();                // 0x01, 0xFE resp: 5? ACK
+  cmdGet();                    // 0x00, 0xFF resp: 15? ACK
+  cmdId();                     // 0x02, 0xFD resp: 5? ACK
   // cmdErase();
   cmdExtErase(); // 0x44, 0xBB
 
